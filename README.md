@@ -1,89 +1,69 @@
-FIAP Farms
+# React + TypeScript + Vite
 
-> Solução cross-platform para a Cooperativa FIAP Farms, desenvolvida para o Tech Challenge da Pós-Graduação. O projeto oferece uma visão estratégica de vendas e produção através de dashboards interativos, controle de estoque e sistema de metas.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-### ✨ Sobre o Projeto
+Currently, two official plugins are available:
 
-O **AgroDash** é a resposta ao desafio proposto pela Cooperativa FIAP Farms. O objetivo é fornecer aos cooperados uma ferramenta poderosa e intuitiva para otimizar o planejamento de safras e maximizar a lucratividade. A solução é composta por uma aplicação web para desktops e um aplicativo mobile, garantindo acesso às informações em qualquer lugar.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-### 🚀 Features Principais
+## Expanding the ESLint configuration
 
--   **📊 Dashboard de Vendas:** Visualização clara dos produtos de maior lucro, com gráficos e filtros interativos.
--   **🌱 Dashboard de Produção:** Acompanhamento em tempo real do status da produção (Aguardando, Em Produção, Colhido).
--   **📦 Controle de Estoque e Vendas:** Interface para inserir dados de vendas e produção, alimentando os dashboards de forma centralizada.
--   **🎯 Metas e Notificações:** Definição de metas de vendas e produção com um sistema de notificações para celebrar as conquistas.
--   **🔒 Autenticação Segura:** Login de usuários utilizando e-mail, Google ou outros provedores via Firebase Authentication.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-### 🛠️ Tecnologias e Arquitetura
+```js
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-Este projeto foi construído utilizando um monorepo gerenciado com **pnpm** para facilitar o compartilhamento de código e configurações entre as plataformas web e mobile.
+      // Remove tseslint.configs.recommended and replace with this
+      ...tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      ...tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      ...tseslint.configs.stylisticTypeChecked,
 
-| Categoria              | Tecnologia / Conceito                                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Gerenciador de Pacotes** | [**pnpm**](https://pnpm.io/) (Workspaces)                                                                          |
-| **Plataforma Web** | [**Next.js**](https://nextjs.org/), [**React**](https://reactjs.org/), [**TypeScript**](https://www.typescriptlang.org/) |
-| **Plataforma Mobile** | [**React Native**](https://reactnative.dev/), [**TypeScript**](https://www.typescriptlang.org/)                        |
-| **Backend & Serviços** | [**Firebase**](https://firebase.google.com/) (Authentication, Firestore)                                           |
-| **Visualização de Dados** | [**Google Charts**](https://developers.google.com/chart) / [**Charts.js**](https://www.chartjs.org/)             |
-| **Arquitetura** | **Microfrontend**, **Clean Architecture** |
-| **Gerenciamento de Estado** | Gerenciamento de Estado Global (ex: Zustand, Redux Toolkit)                                                      |
-
-### 📂 Estrutura do Monorepo
-
-O projeto está organizado em um workspace do pnpm, com a seguinte estrutura:
-
-```
-/
-├── apps/
-│   ├── web/        # Aplicação Web (Next.js)
-│   └── mobile/     # Aplicação Mobile (React Native)
-|
-├── packages/
-│   ├── ui/         # Componentes React compartilhados (botões, cards, etc.)
-│   └── config/     # Configurações compartilhadas (ESLint, TypeScript)
-|
-├── package.json
-└── pnpm-workspace.yaml
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-### 🏁 Como Executar o Projeto
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-**Pré-requisitos:**
-* [Node.js](https://nodejs.org/) (versão 18 ou superior)
-* [pnpm](https://pnpm.io/installation) instalado globalmente (`npm install -g pnpm`)
-* Conta no [Firebase](https://firebase.google.com/) com um projeto configurado (Authentication e Firestore habilitados).
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-**1. Clone o repositório:**
-```bash
-git clone [https://github.com/brunaa-f/fiap-farms.git](https://github.com/brunaa-f/fiap-farms.git)
-cd fiap-farms
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-**2. Configure as variáveis de ambiente:**
-Crie um arquivo `.env.local` dentro de `apps/web` e `apps/mobile` a partir do arquivo `.env.example` fornecido em cada pasta. Preencha com as credenciais do seu projeto Firebase.
-
-**3. Instale as dependências:**
-Na raiz do projeto, execute o comando para instalar todas as dependências do workspace.
-```bash
-pnpm install
-```
-
-**4. Execute as aplicações:**
-
-* **Para rodar a aplicação Web (Next.js):**
-    ```bash
-    # Executa a aplicação web na porta 3000
-    pnpm --filter web dev
-    ```
-
-* **Para rodar a aplicação Mobile (React Native):**
-    ```bash
-    # Inicia o Metro Bundler
-    pnpm --filter mobile start
-
-    # Em outro terminal, para rodar no Android
-    pnpm --filter mobile android
-
-    # Ou para rodar no iOS (requer macOS e Xcode)
-    pnpm --filter mobile ios
-    ```
