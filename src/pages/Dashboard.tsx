@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-
 import { useUserStore } from '../store/userStore';
-import { useProductionStore } from '../store/productionStore'; // ✅ NOVO
+import { useProductionStore } from '../store/productionStore';
+import { useSalesStore } from '../store/salesStore';
 import { auth } from '../services/firebase';
 import { createLot } from '../services/productionService';
 import { recordSale } from '../services/salesService';
 import { ProductionForm } from '../components/ProductionForm';
 import { SalesForm } from '../components/SalesForm';
-import { ProductionDashboard } from '../components/ProductionDashboard'; // ✅ NOVO
+import { ProductionDashboard } from '../components/ProductionDashboard';
+import { SalesDashboard } from '../components/SalesDashboard';
 
-// Estilos CSS
 const styles: { [key: string]: React.CSSProperties } = {
   dashboardContainer: {
     padding: '40px',
@@ -44,8 +44,19 @@ const styles: { [key: string]: React.CSSProperties } = {
   salesButton: {
     backgroundColor: '#28a745',
   },
-  dashboardSection: {
+  dashboardsContainer: {
+    display: 'flex',
+    gap: '30px',
     marginTop: '40px',
+    flexWrap: 'wrap',
+  },
+  dashboardBox: {
+    flex: 1,
+    minWidth: '450px',
+    padding: '20px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    backgroundColor: '#fff',
   },
   sectionTitle: {
     fontSize: '22px',
@@ -79,39 +90,55 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
 };
 
+interface ProductionFormData {
+  productName: string;
+  costPerUnit: number;
+  status: string;
+}
+
+interface SaleFormData {
+  productName: string;
+  quantitySold: number;
+  pricePerUnit: number;
+}
+
 export const Dashboard = () => {
   const { user } = useUserStore();
-  const { lots, isLoading, listenToLots, unsubscribe } = useProductionStore();
+  const production = useProductionStore();
+  const sales = useSalesStore();
 
   const [isProductionModalOpen, setProductionModalOpen] = useState(false);
   const [isSalesModalOpen, setSalesModalOpen] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
-      listenToLots(user.uid);
+      production.listenToLots(user.uid);
+      sales.listenToSales(user.uid);
     }
-
     return () => {
-      unsubscribe();
+      production.unsubscribe();
+      sales.unsubscribe();
     };
-  }, [user]); 
+  }, [user]);
 
-  const handleLogout = () => {
-    auth.signOut();
+  const handleLogout = () => auth.signOut();
+
+  const handleSaveProduction = async (formData: ProductionFormData) => { 
+    if (!user) return; 
+    const result = await createLot(formData, user.uid); 
+    if(result.success) { 
+      alert("Sucesso!"); 
+      setProductionModalOpen(false); 
+    }
   };
 
-  const handleSaveProduction = async (formData: { productName: string; costPerUnit: number; status: string }) => {
-    if (!user) { alert("Erro: usuário não autenticado."); return; }
-    const result = await createLot(formData, user.uid);
-    if (result.success) { alert("Sucesso! Lote de produção salvo."); setProductionModalOpen(false); } 
-    else { alert(`Erro ao salvar: ${result.error}`); }
-  };
-
-  const handleSaveSale = async (formData: { productName: string; quantitySold: number; pricePerUnit: number; }) => {
-    if (!user) { alert("Erro: usuário não autenticado."); return; }
-    const result = await recordSale(formData, user.uid);
-    if (result.success) { alert("Sucesso! Venda registrada."); setSalesModalOpen(false); } 
-    else { alert(`Erro ao registrar venda: ${result.error}`); }
+  const handleSaveSale = async (formData: SaleFormData) => { 
+    if (!user) return; 
+    const result = await recordSale(formData, user.uid); 
+    if(result.success) { 
+      alert("Sucesso!"); 
+      setSalesModalOpen(false); 
+    }
   };
 
   return (
@@ -125,27 +152,22 @@ export const Dashboard = () => {
         </div>
       </header>
 
-      {/* ✅ NOVO: Seção para exibir o dashboard de produção */}
-      <section style={styles.dashboardSection}>
-        <h2 style={styles.sectionTitle}>Status da Produção</h2>
-        {isLoading ? (
-          <p>Carregando dados...</p>
-        ) : (
-          <ProductionDashboard lots={lots} />
-        )}
-      </section>
+      <main style={styles.dashboardsContainer}>
+        <section style={styles.dashboardBox}>
+          <h2 style={styles.sectionTitle}>Status da Produção</h2>
+          {production.isLoading ? <p>Carregando...</p> : <ProductionDashboard lots={production.lots} />}
+        </section>
+        
+        <section style={styles.dashboardBox}>
+          <h2 style={styles.sectionTitle}>Lucro por Produto</h2>
+          {sales.isLoading ? <p>Carregando...</p> : <SalesDashboard sales={sales.sales} />}
+        </section>
+      </main>
 
-      <div style={styles.logoutButtonContainer}>
-        <button style={styles.logoutButton} onClick={handleLogout}>Sair</button>
-      </div>
+      <div style={styles.logoutButtonContainer}><button style={styles.logoutButton} onClick={handleLogout}>Sair</button></div>
 
-      {/* Modais (código existente) */}
-      {isProductionModalOpen && (
-        <div style={styles.modalOverlay}><ProductionForm onSave={handleSaveProduction} onClose={() => setProductionModalOpen(false)} /></div>
-      )}
-      {isSalesModalOpen && (
-        <div style={styles.modalOverlay}><SalesForm onSave={handleSaveSale} onClose={() => setSalesModalOpen(false)} /></div>
-      )}
+      {isProductionModalOpen && (<div style={styles.modalOverlay}><ProductionForm onSave={handleSaveProduction} onClose={() => setProductionModalOpen(false)} /></div>)}
+      {isSalesModalOpen && (<div style={styles.modalOverlay}><SalesForm onSave={handleSaveSale} onClose={() => setSalesModalOpen(false)} /></div>)}
     </div>
   );
 };

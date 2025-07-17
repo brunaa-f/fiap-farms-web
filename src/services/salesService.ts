@@ -1,10 +1,17 @@
-import { collection, addDoc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase'; 
+import type { DocumentData } from 'firebase/firestore';
 
 interface SaleData {
   productName: string;
   quantitySold: number;
   pricePerUnit: number;
+}
+
+export interface SaleRecord extends DocumentData {
+  id: string;
+  productName: string;
+  profit: number;
 }
 
 /**
@@ -64,4 +71,18 @@ export const recordSale = async (saleData: SaleData, userId: string) => {
     console.error("❌ Erro ao registrar a venda: ", error);
     return { success: false, error: (error as Error).message };
   }
+};
+
+export const listenToSales = (userId: string, callback: (sales: SaleRecord[]) => void) => {
+  const q = query(collection(db, 'sales_records'), where('ownerId', '==', userId));
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const sales: SaleRecord[] = [];
+    querySnapshot.forEach((doc) => {
+      sales.push({ id: doc.id, ...doc.data() } as SaleRecord);
+    });
+    callback(sales);
+  });
+
+  return unsubscribe;
 };
