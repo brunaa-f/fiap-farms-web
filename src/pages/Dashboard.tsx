@@ -1,29 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// Importando tudo que precisamos
 import { useUserStore } from '../store/userStore';
+import { useProductionStore } from '../store/productionStore'; // ✅ NOVO
 import { auth } from '../services/firebase';
 import { createLot } from '../services/productionService';
-import { recordSale } from '../services/salesService'; // ✅ NOVO: Importa o serviço de vendas
+import { recordSale } from '../services/salesService';
 import { ProductionForm } from '../components/ProductionForm';
-import { SalesForm } from '../components/SalesForm'; // ✅ NOVO: Importa o formulário de vendas
+import { SalesForm } from '../components/SalesForm';
+import { ProductionDashboard } from '../components/ProductionDashboard'; // ✅ NOVO
 
 // Estilos CSS
 const styles: { [key: string]: React.CSSProperties } = {
   dashboardContainer: {
     padding: '40px',
-    textAlign: 'center',
     fontFamily: 'sans-serif',
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
+  header: {
+    textAlign: 'center',
   },
   welcomeMessage: {
     fontSize: '18px',
     marginBottom: '20px',
   },
-  // ✅ NOVO: Container para os botões de ação
   actionsContainer: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '20px', // Espaço entre os botões
+    gap: '20px',
     margin: '20px 0',
   },
   actionButton: {
@@ -35,10 +39,23 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '5px',
   },
   productionButton: {
-    backgroundColor: '#007bff', // Azul
+    backgroundColor: '#007bff',
   },
   salesButton: {
-    backgroundColor: '#28a745', // Verde
+    backgroundColor: '#28a745',
+  },
+  dashboardSection: {
+    marginTop: '40px',
+  },
+  sectionTitle: {
+    fontSize: '22px',
+    fontWeight: 'bold',
+    marginBottom: '20px',
+    textAlign: 'center',
+  },
+  logoutButtonContainer: {
+    textAlign: 'center',
+    marginTop: '50px',
   },
   logoutButton: {
     padding: '8px 16px',
@@ -47,7 +64,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     border: 'none',
     borderRadius: '5px',
-    marginTop: '30px',
   },
   modalOverlay: {
     position: 'fixed',
@@ -65,79 +81,70 @@ const styles: { [key: string]: React.CSSProperties } = {
 
 export const Dashboard = () => {
   const { user } = useUserStore();
+  const { lots, isLoading, listenToLots, unsubscribe } = useProductionStore();
+
   const [isProductionModalOpen, setProductionModalOpen] = useState(false);
-  const [isSalesModalOpen, setSalesModalOpen] = useState(false); // ✅ NOVO: Estado para o modal de vendas
+  const [isSalesModalOpen, setSalesModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.uid) {
+      listenToLots(user.uid);
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user]); 
 
   const handleLogout = () => {
     auth.signOut();
   };
 
-  const handleSaveProduction = async (formData: { productName: string; costPerUnit: number; status:string }) => {
-    if (!user) {
-      alert("Erro: usuário não autenticado.");
-      return;
-    }
+  const handleSaveProduction = async (formData: { productName: string; costPerUnit: number; status: string }) => {
+    if (!user) { alert("Erro: usuário não autenticado."); return; }
     const result = await createLot(formData, user.uid);
-    if (result.success) {
-      alert("Sucesso! Lote de produção salvo.");
-      setProductionModalOpen(false);
-    } else {
-      alert(`Erro ao salvar: ${result.error}`);
-    }
+    if (result.success) { alert("Sucesso! Lote de produção salvo."); setProductionModalOpen(false); } 
+    else { alert(`Erro ao salvar: ${result.error}`); }
   };
 
-  // ✅ NOVO: Função para salvar a venda
   const handleSaveSale = async (formData: { productName: string; quantitySold: number; pricePerUnit: number; }) => {
-    if (!user) {
-      alert("Erro: usuário não autenticado.");
-      return;
-    }
+    if (!user) { alert("Erro: usuário não autenticado."); return; }
     const result = await recordSale(formData, user.uid);
-    if (result.success) {
-      alert("Sucesso! Venda registrada.");
-      setSalesModalOpen(false);
-    } else {
-      alert(`Erro ao registrar venda: ${result.error}`);
-    }
+    if (result.success) { alert("Sucesso! Venda registrada."); setSalesModalOpen(false); } 
+    else { alert(`Erro ao registrar venda: ${result.error}`); }
   };
 
   return (
     <div style={styles.dashboardContainer}>
-      <h1>Dashboard</h1>
-      <p style={styles.welcomeMessage}>Bem-vindo, {user?.email}! Você está logado.</p>
-      
-      <div style={styles.actionsContainer}>
-        <button style={{...styles.actionButton, ...styles.productionButton}} onClick={() => setProductionModalOpen(true)}>
-          + Adicionar Produção
-        </button>
-        {/* ✅ NOVO: Botão para abrir o modal de vendas */}
-        <button style={{...styles.actionButton, ...styles.salesButton}} onClick={() => setSalesModalOpen(true)}>
-          + Registrar Venda
-        </button>
-      </div>
-      
-      <div>
+      <header style={styles.header}>
+        <h1>Dashboard</h1>
+        <p style={styles.welcomeMessage}>Bem-vindo, {user?.email}! Você está logado.</p>
+        <div style={styles.actionsContainer}>
+          <button style={{...styles.actionButton, ...styles.productionButton}} onClick={() => setProductionModalOpen(true)}>+ Adicionar Produção</button>
+          <button style={{...styles.actionButton, ...styles.salesButton}} onClick={() => setSalesModalOpen(true)}>+ Registrar Venda</button>
+        </div>
+      </header>
+
+      {/* ✅ NOVO: Seção para exibir o dashboard de produção */}
+      <section style={styles.dashboardSection}>
+        <h2 style={styles.sectionTitle}>Status da Produção</h2>
+        {isLoading ? (
+          <p>Carregando dados...</p>
+        ) : (
+          <ProductionDashboard lots={lots} />
+        )}
+      </section>
+
+      <div style={styles.logoutButtonContainer}>
         <button style={styles.logoutButton} onClick={handleLogout}>Sair</button>
       </div>
 
-      {/* Modal de Produção (código existente) */}
+      {/* Modais (código existente) */}
       {isProductionModalOpen && (
-        <div style={styles.modalOverlay}>
-          <ProductionForm
-            onSave={handleSaveProduction}
-            onClose={() => setProductionModalOpen(false)}
-          />
-        </div>
+        <div style={styles.modalOverlay}><ProductionForm onSave={handleSaveProduction} onClose={() => setProductionModalOpen(false)} /></div>
       )}
-
-      {/* ✅ NOVO: Modal de Vendas */}
       {isSalesModalOpen && (
-        <div style={styles.modalOverlay}>
-          <SalesForm
-            onSave={handleSaveSale}
-            onClose={() => setSalesModalOpen(false)}
-          />
-        </div>
+        <div style={styles.modalOverlay}><SalesForm onSave={handleSaveSale} onClose={() => setSalesModalOpen(false)} /></div>
       )}
     </div>
   );
