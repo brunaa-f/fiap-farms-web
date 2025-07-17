@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { useUserStore } from '../store/userStore';
 import { auth } from '../services/firebase';
 import { createLot } from '../services/productionService';
+import { recordSale } from '../services/salesService'; // ✅ NOVO: Importa o serviço de vendas
 import { ProductionForm } from '../components/ProductionForm';
+import { SalesForm } from '../components/SalesForm'; // ✅ NOVO: Importa o formulário de vendas
 
-// Estilos CSS em formato de objeto para a web.
-// Isso substitui o `StyleSheet` do React Native.
+// Estilos CSS
 const styles: { [key: string]: React.CSSProperties } = {
   dashboardContainer: {
     padding: '40px',
@@ -18,15 +19,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '18px',
     marginBottom: '20px',
   },
+  // ✅ NOVO: Container para os botões de ação
+  actionsContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '20px', // Espaço entre os botões
+    margin: '20px 0',
+  },
   actionButton: {
     padding: '12px 24px',
     fontSize: '16px',
     cursor: 'pointer',
-    backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
     borderRadius: '5px',
-    margin: '20px 0',
+  },
+  productionButton: {
+    backgroundColor: '#007bff', // Azul
+  },
+  salesButton: {
+    backgroundColor: '#28a745', // Verde
   },
   logoutButton: {
     padding: '8px 16px',
@@ -51,11 +63,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
 };
 
-// Este é o componente Dashboard corrigido.
-// Note que usamos `div`, `p`, e `button` em vez de `View`, `Text`, e `Button`.
 export const Dashboard = () => {
   const { user } = useUserStore();
-  const [isModalOpen, setModalOpen] = useState(false);
+  const [isProductionModalOpen, setProductionModalOpen] = useState(false);
+  const [isSalesModalOpen, setSalesModalOpen] = useState(false); // ✅ NOVO: Estado para o modal de vendas
 
   const handleLogout = () => {
     auth.signOut();
@@ -66,14 +77,27 @@ export const Dashboard = () => {
       alert("Erro: usuário não autenticado.");
       return;
     }
-    
     const result = await createLot(formData, user.uid);
-
     if (result.success) {
       alert("Sucesso! Lote de produção salvo.");
-      setModalOpen(false);
+      setProductionModalOpen(false);
     } else {
       alert(`Erro ao salvar: ${result.error}`);
+    }
+  };
+
+  // ✅ NOVO: Função para salvar a venda
+  const handleSaveSale = async (formData: { productName: string; quantitySold: number; pricePerUnit: number; }) => {
+    if (!user) {
+      alert("Erro: usuário não autenticado.");
+      return;
+    }
+    const result = await recordSale(formData, user.uid);
+    if (result.success) {
+      alert("Sucesso! Venda registrada.");
+      setSalesModalOpen(false);
+    } else {
+      alert(`Erro ao registrar venda: ${result.error}`);
     }
   };
 
@@ -82,24 +106,36 @@ export const Dashboard = () => {
       <h1>Dashboard</h1>
       <p style={styles.welcomeMessage}>Bem-vindo, {user?.email}! Você está logado.</p>
       
-      {/* Botão para abrir o modal */}
-      <button style={styles.actionButton} onClick={() => setModalOpen(true)}>
-        + Adicionar Produção
-      </button>
+      <div style={styles.actionsContainer}>
+        <button style={{...styles.actionButton, ...styles.productionButton}} onClick={() => setProductionModalOpen(true)}>
+          + Adicionar Produção
+        </button>
+        {/* ✅ NOVO: Botão para abrir o modal de vendas */}
+        <button style={{...styles.actionButton, ...styles.salesButton}} onClick={() => setSalesModalOpen(true)}>
+          + Registrar Venda
+        </button>
+      </div>
       
       <div>
         <button style={styles.logoutButton} onClick={handleLogout}>Sair</button>
       </div>
 
-      {/* Este é o nosso Modal para a web. 
-        É apenas uma `div` que cobre a tela inteira e aparece ou desaparece
-        dependendo do estado `isModalOpen`.
-      */}
-      {isModalOpen && (
+      {/* Modal de Produção (código existente) */}
+      {isProductionModalOpen && (
         <div style={styles.modalOverlay}>
           <ProductionForm
             onSave={handleSaveProduction}
-            onClose={() => setModalOpen(false)}
+            onClose={() => setProductionModalOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* ✅ NOVO: Modal de Vendas */}
+      {isSalesModalOpen && (
+        <div style={styles.modalOverlay}>
+          <SalesForm
+            onSave={handleSaveSale}
+            onClose={() => setSalesModalOpen(false)}
           />
         </div>
       )}
