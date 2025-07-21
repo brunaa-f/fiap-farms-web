@@ -1,69 +1,63 @@
-# React + TypeScript + Vite
+# fiap-farms
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### ✨ Sobre o Projeto
 
-Currently, two official plugins are available:
+ A solução é composta por uma aplicação web para desktops e um aplicativo mobile, garantindo acesso às informações em qualquer lugar.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🚀 Features Principais
 
-## Expanding the ESLint configuration
+-   **📊 Dashboard de Vendas:** Visualização clara dos produtos de maior lucro.
+-   **🌱 Dashboard de Produção:** Acompanhamento em tempo real do status da produção (Aguardando, Em Produção, Colhido).
+-   **📦 Controle de Estoque e Vendas:** Interface para inserir dados de vendas e produção, alimentando os dashboards de forma centralizada.
+-   **🔒 Autenticação Segura:** Login de usuários utilizando e-mail, Google ou outros provedores via Firebase Authentication.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🛠️ Tecnologias e Arquitetura
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Este projeto foi construído utilizando um monorepo gerenciado com **pnpm** para facilitar o compartilhamento de código e configurações entre as plataformas web e mobile.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+| Categoria              | Tecnologia / Conceito                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ | 
+| **Plataforma Web** | [**Next.js**](https://nextjs.org/), [**React**](https://reactjs.org/), [**TypeScript**](https://www.typescriptlang.org/) |
+| **Plataforma Mobile** | [**React Native**](https://reactnative.dev/), [**TypeScript**](https://www.typescriptlang.org/)                        |
+| **Backend & Serviços** | [**Firebase**](https://firebase.google.com/) (Authentication, Firestore)                                           |
+| **Visualização de Dados** | [**Google Charts**](https://developers.google.com/chart) / [**Charts.js**](https://www.chartjs.org/)             |
+| **Arquitetura** | **Microfrontend**, **Clean Architecture** |
+| **Gerenciamento de Estado** | Zustand                                         |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 🏁 Como Executar o Projeto
+
+**Pré-requisitos:**
+* [Node.js](https://nodejs.org/) (versão 18 ou superior)
+* Conta no [Firebase](https://firebase.google.com/) com um projeto configurado (Authentication e Firestore habilitados).
+
+**1. Clone os repositórios:**
+
+Clone o repositório da aplicação web
+```bash
+git clone https://github.com/brunaa-f/fiap-farms-web.git
+cd fiap-farms-web
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Clone o repositório do aplicativo mobile
+```bash
+git clone https://github.com/brunaa-f/fiap-farms-mobile.git
+cd fiap-farms-mobile
 ```
+
+**3. Instale as dependências:**
+Em cada projeto, execute o comando para instalar todas as dependências do workspace.
+```bash
+npm i
+```
+
+**4. Execute as aplicações:**
+
+* **Para rodar a aplicação Web (Next.js):**
+    ```bash
+    npm run dev
+    ```
+
+* **Para rodar a aplicação Mobile (React Native):**
+    ```bash
+    npx expo start
+    ```
